@@ -2,6 +2,8 @@
 
 const app = {};
 
+
+// Creating list of networks, based on cities (cities pulled by Google Maps)
 app.cities = {
     "Toronto": "bixi-toronto",
     "Ottawa": "velogo",
@@ -11,11 +13,15 @@ app.cities = {
     "Hamilton": "sobi-hamilton"
 }
 
+// Empty arrays to be pushed to later
+
 app.availableBikes = [];
 
 app.availableSlots = [];
 
 app.events = () => {
+
+    // Getting the user's location
     const locationPromise = new Promise((resolve, reject) => {
         navigator.geolocation.watchPosition(function(pos) {
         resolve(pos);
@@ -33,23 +39,27 @@ app.events = () => {
     });
 };
 
-const cityBikesURL = "http://api.citybik.es/v2/networks/bixi-toronto";
-
 app.getLocations = (cityName) => {
 
-    console.log(cityName);
+    // Finding if the user resides in a locale with bikeshare.
 
     for (let city in app.cities) {
         if (cityName === city) {
+
+            // The app will pull the bike locations based on the network listed if a city matches.
             app.networkName = app.cities[city]
         }
     }    
+
+    // If the city is not in any network, return an error.
 
     if (app.networkName === undefined) {
         app.home.infowindow.open(app.map, app.home)
     }
 
     const cityBikesURL = `https://api.citybik.es/v2/networks/${app.networkName}`;
+
+    // Pull the bike locations.
 
     $.ajax({
         url: cityBikesURL,
@@ -64,6 +74,8 @@ app.getLocations = (cityName) => {
     });
 };
 
+// Empty array for locations of bikes.
+
 app.markers = [];
 
 app.setLocations = stations => {
@@ -76,6 +88,8 @@ app.setLocations = stations => {
         freeBikes: location.free_bikes
     });
 
+    // Check quantities of bikes and slots, and return them to the appropriate arrays.
+
     if (marker.emptySlots > 0) {
         app.availableSlots.push(marker);
     }
@@ -83,10 +97,14 @@ app.setLocations = stations => {
         app.availableBikes.push(marker);
     }
 
+    // Grab the distance between the user and all bike locations.
+
     marker.distanceBetween = google.maps.geometry.spherical.computeDistanceBetween(
         marker.position,
         app.home.position
     );
+
+    // Give the user info on the location selected, including empty slots and available bikes.
 
     marker.infowindow = new google.maps.InfoWindow({
         content:    `<div class="info-window">
@@ -175,6 +193,8 @@ app.geocodeLatLng = (geocoder, map, latGeo, lngGeo) => {
     })
 }
 
+// When the user clicks a button, send to the closest location that matches the criteria, and give directions from current location.
+
 app.getNearestBike = (homeLat, homeLng) => {
     const myLat = homeLat;
     const myLng = homeLng;
@@ -187,6 +207,8 @@ app.getNearestBike = (homeLat, homeLng) => {
     let travelMode = "";
 
     const distances = [];
+
+    // Base the directions to walk if searching for a bike, and to bike if searching for a slot.
 
     if (id === "getBike") {
         travelMode = "WALKING";
@@ -220,7 +242,7 @@ app.getNearestBike = (homeLat, homeLng) => {
 
     closestLocation.lng = closestLocation.getPosition().lng();
 
-    // console.log(closestLocation.lat, closestLocation.lng);
+    // Send all parameters to display the route.
 
     app.calcRoute(
         myLat,
@@ -232,10 +254,9 @@ app.getNearestBike = (homeLat, homeLng) => {
     });
 };
 
+// Get the route
+
 app.calcRoute = (homeLat, homeLng, destLat, destLng, mode) => {
-    console.log(
-    `You're at ${homeLat} ${homeLng}. You're going to ${destLat} ${destLng} by ${mode}.`
-    );
     const yourStart = new google.maps.LatLng(homeLat, homeLng);
     const yourEnd = new google.maps.LatLng(destLat, destLng);
     const yourMode = mode;
@@ -254,5 +275,7 @@ app.calcRoute = (homeLat, homeLng, destLat, destLng, mode) => {
 app.init = () => {
     app.events();
 };
+
+// Run the damn thing
 
 $(app.init);
