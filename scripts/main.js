@@ -2,6 +2,15 @@
 
 const app = {};
 
+app.cities = {
+    "Toronto": "bixi-toronto",
+    "Ottawa": "velogo",
+    "Montréal": "bixi-montreal",
+    "Vancouver": "Vancouver",
+    "Victoria": "nextbike-victoria",
+    "Hamilton": "sobi-hamilton"
+}
+
 app.availableBikes = [];
 
 app.availableSlots = [];
@@ -27,29 +36,20 @@ app.events = () => {
 const cityBikesURL = "http://api.citybik.es/v2/networks/bixi-toronto";
 
 app.getLocations = (cityName) => {
-    if (cityName === "Toronto") {
-        app.networkName = "bixi-toronto";
-    }
-    else if (cityName === "Ottawa") {
-        app.networkName = "velogo";
-    }
-    else if (cityName === "Montréal") {
-        app.networkName = "bixi-montreal";
-    }
-    else if (cityName === "Vancouver") {
-        app.networkName = "mobibikes";
-    }
-    else if (cityName === "Victoria") {
-        app.networkName = "nextbike-victoria";
-    }
-    else if (cityName === "Hamilton") {
-        app.networkName = "sobi-hamilton";
-    }
-    else {
+
+    console.log(cityName);
+
+    for (let city in app.cities) {
+        if (cityName === city) {
+            app.networkName = app.cities[city]
+        }
+    }    
+
+    if (app.networkName === undefined) {
         app.home.infowindow.open(app.map, app.home)
     }
 
-    const cityBikesURL = `http://api.citybik.es/v2/networks/${app.networkName}`;
+    const cityBikesURL = `https://api.citybik.es/v2/networks/${app.networkName}`;
 
     $.ajax({
         url: cityBikesURL,
@@ -164,23 +164,15 @@ app.findCityNameLoop = (components) => {
     }
 }
 
-//add to main
 app.geocodeLatLng = (geocoder, map, latGeo, lngGeo) => {
     var latlng = { lat: latGeo, lng: lngGeo };
     app.geocoder.geocode({ 'location': latlng }, function (results, status) {
-        console.log(results);
-
 
         const components = results[0].address_components
-        console.log(components);
 
         app.findCityNameLoop(components)
 
     })
-    // .asPromise().then(response => {
-    //     console.log(response);
-
-    // });
 }
 
 app.getNearestBike = (homeLat, homeLng) => {
